@@ -181,6 +181,7 @@ const HOLD_DELAY = 350;
 const DEFAULT_STATUS = "Klik pro prehrani, podrz pro sdileni";
 const soundSections = document.getElementById("soundSections");
 const soundCount = document.getElementById("soundCount");
+const soundSearch = document.getElementById("soundSearch");
 let activePlayback = null;
 
 const sounds = audioFiles.map((fileName) => createSound(fileName));
@@ -191,6 +192,7 @@ const groups = groupConfigs.map((config) => ({
 
 renderSections();
 soundCount.textContent = `${sounds.length} hlasek`;
+soundSearch.addEventListener("input", filterSounds);
 
 function createSound(fileName) {
   const match = fileName.match(/^(\d{3})\.(.+)\.mp3$/i);
@@ -250,6 +252,7 @@ function renderSections() {
       button.type = "button";
       button.className = "sound-card";
       button.dataset.soundId = sound.id;
+      button.dataset.search = `${sound.number} ${sound.title}`.toLowerCase();
       button.innerHTML = `
         <span class="index">#${sound.number}</span>
         <span class="title">${sound.title}</span>
@@ -262,6 +265,34 @@ function renderSections() {
 
     soundSections.appendChild(section);
   }
+}
+
+function filterSounds() {
+  const query = soundSearch.value.trim().toLowerCase();
+  const sections = soundSections.querySelectorAll(".sound-group");
+  let visibleCount = 0;
+
+  for (const section of sections) {
+    const buttons = section.querySelectorAll(".sound-card");
+    let sectionVisibleCount = 0;
+
+    for (const button of buttons) {
+      const matches = query === "" || button.dataset.search.includes(query);
+      button.hidden = !matches;
+      if (matches) {
+        sectionVisibleCount += 1;
+        visibleCount += 1;
+      }
+    }
+
+    section.classList.toggle("is-hidden", sectionVisibleCount === 0);
+    const badge = section.querySelector(".group-badge");
+    if (badge) {
+      badge.textContent = sectionVisibleCount;
+    }
+  }
+
+  soundCount.textContent = query ? `${visibleCount} nalezeno` : `${sounds.length} hlasek`;
 }
 
 function attachInteractions(button, sound) {
