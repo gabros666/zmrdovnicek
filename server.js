@@ -44,5 +44,5 @@ const server = http.createServer((request, response) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`Server běží na http://localhost:${PORT}`);
+  console.log(`Server bezi na http://localhost:${PORT}`);
 });

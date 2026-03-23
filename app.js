@@ -181,6 +181,7 @@ const HOLD_DELAY = 650;
 const DEFAULT_STATUS = "Klik pro prehrani, podrz pro sdileni";
 const soundSections = document.getElementById("soundSections");
 const soundCount = document.getElementById("soundCount");
+let activePlayback = null;
 
 const sounds = audioFiles.map((fileName) => createSound(fileName));
 const groups = groupConfigs.map((config) => ({
@@ -262,13 +263,15 @@ function renderSections() {
 function attachInteractions(button, sound) {
   let holdTimer = null;
   let shareTriggered = false;
+  let holdReady = false;
 
   const startHold = () => {
     shareTriggered = false;
+    holdReady = false;
     button.classList.add("is-sharing");
     holdTimer = window.setTimeout(async () => {
-      shareTriggered = true;
-      await shareSound(sound, button);
+      holdReady = true;
+      setStatus(button, "Pust pro sdileni");
     }, HOLD_DELAY);
   };
 
@@ -287,6 +290,13 @@ function attachInteractions(button, sound) {
 
   button.addEventListener("pointerup", async () => {
     stopHold();
+    if (holdReady) {
+      shareTriggered = true;
+      holdReady = false;
+      await shareSound(sound, button);
+      return;
+    }
+
     if (!shareTriggered) {
       await playSound(sound, button);
     }
@@ -298,6 +308,10 @@ function attachInteractions(button, sound) {
 }
 
 async function playSound(sound, button) {
+  if (activePlayback && activePlayback.sound.id !== sound.id) {
+    stopSound(activePlayback.sound, activePlayback.button);
+  }
+
   if (!sound.audio.paused) {
     setStatus(button, "Zvuk uz hraje");
     return;
@@ -307,25 +321,27 @@ async function playSound(sound, button) {
     sound.audio.currentTime = 0;
     button.classList.add("is-playing");
     setStatus(button, "Prehrava se");
+    activePlayback = { sound, button };
     await sound.audio.play();
   } catch (error) {
     console.error(error);
     button.classList.remove("is-playing");
+    if (activePlayback && activePlayback.sound.id === sound.id) {
+      activePlayback = null;
+    }
     setStatus(button, "Nepodarilo se prehrat");
     return;
   }
 
   sound.audio.onended = () => {
-    button.classList.remove("is-playing");
-    setStatus(button, DEFAULT_STATUS);
+    resetButtonState(sound, button);
   };
 
   sound.audio.onpause = () => {
     if (sound.audio.ended) {
       return;
     }
-    button.classList.remove("is-playing");
-    setStatus(button, "Pozastaveno");
+    resetButtonState(sound, button);
   };
 }
 
@@ -375,6 +391,20 @@ function setStatus(button, text) {
   const status = button.querySelector(".status");
   if (status) {
     status.textContent = text;
+  }
+}
+
+function stopSound(sound, button) {
+  sound.audio.pause();
+  sound.audio.currentTime = 0;
+  resetButtonState(sound, button);
+}
+
+function resetButtonState(sound, button) {
+  button.classList.remove("is-playing");
+  setStatus(button, DEFAULT_STATUS);
+  if (activePlayback && activePlayback.sound.id === sound.id) {
+    activePlayback = null;
   }
 }
 
