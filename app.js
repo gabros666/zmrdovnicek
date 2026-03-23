@@ -177,7 +177,7 @@ const groupConfigs = [
   { title: "Blok 6", subtitle: "Hlasky 141 az 167", start: 141, end: 167, colors: ["#5f6540", "#94a465"] },
 ];
 
-const HOLD_DELAY = 650;
+const HOLD_DELAY = 350;
 const DEFAULT_STATUS = "Klik pro prehrani, podrz pro sdileni";
 const soundSections = document.getElementById("soundSections");
 const soundCount = document.getElementById("soundCount");

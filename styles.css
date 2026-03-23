@@ -16,6 +16,9 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   background:
     radial-gradient(circle at top left, rgba(255, 209, 168, 0.85), transparent 24%),
     radial-gradient(circle at 85% 12%, rgba(255, 137, 95, 0.18), transparent 20%),
@@ -143,6 +146,9 @@ h1 {
   box-shadow: 0 8px 22px rgba(80, 52, 24, 0.12);
   cursor: pointer;
   transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
 }
 
 .sound-card:hover,
