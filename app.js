@@ -189,11 +189,6 @@ const groups = groupConfigs.map((config) => ({
   sounds: sounds.filter((sound) => sound.index >= config.start && sound.index <= config.end),
 }));
 
-for (const sound of sounds) {
-  sound.audio = new Audio(sound.src);
-  sound.audio.preload = "auto";
-}
-
 renderSections();
 soundCount.textContent = `${sounds.length} hlasek`;
 
@@ -209,8 +204,17 @@ function createSound(fileName) {
     title: formatTitle(rawTitle),
     fileName,
     src: `assets/${encodeURIComponent(fileName)}`,
-    audio: null,
+    audio: createAudio(fileName),
   };
+}
+
+function createAudio(fileName) {
+  const audio = new Audio(`assets/${encodeURIComponent(fileName)}`);
+  audio.preload = "metadata";
+  audio.addEventListener("error", () => {
+    console.warn(`Audio se nepodarilo nacist: ${fileName}`, audio.error);
+  });
+  return audio;
 }
 
 function formatTitle(value) {
@@ -317,6 +321,8 @@ async function playSound(sound, button) {
     return;
   }
 
+  sound.audio.load();
+
   try {
     sound.audio.currentTime = 0;
     button.classList.add("is-playing");
@@ -329,7 +335,7 @@ async function playSound(sound, button) {
     if (activePlayback && activePlayback.sound.id === sound.id) {
       activePlayback = null;
     }
-    setStatus(button, "Nepodarilo se prehrat");
+    setStatus(button, getPlaybackErrorLabel(sound.audio));
     return;
   }
 
@@ -406,6 +412,14 @@ function resetButtonState(sound, button) {
   if (activePlayback && activePlayback.sound.id === sound.id) {
     activePlayback = null;
   }
+}
+
+function getPlaybackErrorLabel(audio) {
+  if (audio.error && audio.error.code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED) {
+    return "Format se nepodarilo prehrat";
+  }
+
+  return "Nepodarilo se prehrat";
 }
 
 async function fallbackShare(sound, button) {
